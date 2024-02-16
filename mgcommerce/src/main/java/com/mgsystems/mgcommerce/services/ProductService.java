@@ -49,4 +49,13 @@ public class ProductService {
         entity.setImgUrl(dto.getImgUrl());
 
     }
+
+    @Transactional
+    public ProductDTO update(Long id, ProductDTO dto) {
+        Product entity = repository.getReferenceById(id);
+        copyDtoToEntity(dto, entity);
+        entity= repository.save(entity);
+
+        return new ProductDTO(entity);
+    }
 }
