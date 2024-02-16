@@ -4,6 +4,8 @@ import com.mgsystems.mgcommerce.dto.ProductDTO;
 import com.mgsystems.mgcommerce.entities.Product;
 import com.mgsystems.mgcommerce.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,14 @@ public class ProductController {
 
         return ResponseEntity.ok(service.findById(id));
 
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ProductDTO>> findAllPage(Pageable pageable){
+
+        Page<ProductDTO> page = service.findAll(pageable);
+
+        return ResponseEntity.ok(page);
     }
 
 }
