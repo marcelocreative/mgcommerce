@@ -3,10 +3,15 @@ package com.mgsystems.mgcommerce.services;
 import com.mgsystems.mgcommerce.dto.ProductDTO;
 import com.mgsystems.mgcommerce.entities.Product;
 import com.mgsystems.mgcommerce.repositories.ProductRepository;
+import com.mgsystems.mgcommerce.services.exceptions.DatabaseException;
+import com.mgsystems.mgcommerce.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -18,7 +23,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductDTO findById(Long id){
 
-        Product entity = repository.findById(id).get();
+        Product entity = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         return new ProductDTO(entity);
 
     }
@@ -40,7 +45,33 @@ public class ProductService {
 
         return new ProductDTO(entity);
     }
-;
+    @Transactional
+    public ProductDTO update(Long id, ProductDTO dto) {
+
+        try{
+            Product entity = repository.getReferenceById(id);
+            copyDtoToEntity(dto, entity);
+            entity= repository.save(entity);
+
+            return new ProductDTO(entity);
+        }catch (EntityNotFoundException e){
+            throw new ResourceNotFoundException("Resource not found");
+        }
+
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public void delete(Long id) {
+        if(!repository.existsById(id)){
+            throw new ResourceNotFoundException("Id not found");
+        }
+        try {
+            repository.deleteById(id);
+        }catch (DataIntegrityViolationException e){
+            throw new DatabaseException("Integrity violation");
+        }
+    }
+
     private void copyDtoToEntity(ProductDTO dto, Product entity) {
 
         entity.setName(dto.getName());
@@ -50,12 +81,4 @@ public class ProductService {
 
     }
 
-    @Transactional
-    public ProductDTO update(Long id, ProductDTO dto) {
-        Product entity = repository.getReferenceById(id);
-        copyDtoToEntity(dto, entity);
-        entity= repository.save(entity);
-
-        return new ProductDTO(entity);
-    }
 }
